@@ -2,3 +2,4 @@
 *.so
 *.dylib
 compile_flags.txt
+.DS_Store

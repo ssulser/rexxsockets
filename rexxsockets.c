@@ -1,5 +1,6 @@
 #define INCL_RXFUNC
 #define INCL_RXSHV
+
 #include "rexxsaa.h"
 
 #include <errno.h>
