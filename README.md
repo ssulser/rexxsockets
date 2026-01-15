@@ -6,8 +6,6 @@
 It provides TCP, UDP, `poll()`-based multiplexing and a modern resolver
 (`getaddrinfo`) using Rexx-friendly stem interfaces.
 
-Windows is **intentionally not supported**.
-
 ---
 
 ## Why rexxsockets?
@@ -58,10 +56,7 @@ Registers all Rexx-callable functions in C using
 `RexxRegisterFunctionExe()`.
 
 ```rexx
-lib = "./librexxsockets.dylib"
-/* Linux: lib = "./librexxsockets.so" */
-
-call rxfuncadd "RSLoadFuncs", lib, "RSLoadFuncs"
+call RxFuncAdd "RSLoadFuncs", "rexxsockets", "RSLoadFuncs"
 rc = RSLoadFuncs()
 if rc \= 0 then do
   say "RSLoadFuncs failed, rc="rc
@@ -72,7 +67,7 @@ end
 After this, all functions are directly available.
 
 ```rexx
-say RSVERSION()
+say RSVersion()
 ```
 
 ### RSUnloadFuncs()
@@ -88,7 +83,7 @@ call RSUnloadFuncs
 
 ## Mini API Index
 
-* General: `RSVERSION`, `RSVersion`, `RSLastError`, `RSUnloadFuncs`
+* General: `RSVersion`, `RSLastError`, `RSUnloadFuncs`
 * TCP: `RSTCPConnect`, `RSTCPListen`, `RSAccept`
 * I/O: `RSSend`, `RSRecv`, `RSClose`
 * Multiplexing: `RSPoll`
@@ -102,12 +97,12 @@ call RSUnloadFuncs
 
 ## General
 
-### RSVERSION() / RSVersion()
+### RSVersion()
 
 Returns a version string.
 
 ```rexx
-v = RSVERSION()
+v = RSVersion()
 ```
 
 Returns a string, e.g. `"rexxsockets 0.x"`.
