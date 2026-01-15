@@ -290,9 +290,9 @@ Optional filters:
 
 ## Tests and examples
 
-* `test/tcp_client.rexx` – external HTTP test
-* `test/tcp_client_local.rexx` – loopback client
-* `test/sigpipe_test.rexx` – SIGPIPE safety check
+* `examples/tcp_client.rexx` – external HTTP test
+* `examples/tcp_client_local.rexx` – loopback client
+* `examples/sigpipe_test.rexx` – SIGPIPE safety check
 * `examples/echo_server.rexx` – poll-based TCP server
 * `examples/udp_echo.rexx` – UDP echo example
 

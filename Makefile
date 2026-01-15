@@ -1,57 +1,63 @@
 # -------- detect regina-config ----------
 REGINA_CONFIG ?= regina-config
 
-CC      ?= cc
-CFLAGS  ?= -O2 -fPIC $(shell $(REGINA_CONFIG) --cflags)
-LDFLAGS ?= $(shell $(REGINA_CONFIG) --libs)
-INSTALL ?= install
-
-# Deine Library
-LIBNAME := librexxsockets
-DYLIB   := $(LIBNAME).dylib
-
-# Addons-Verzeichnis über regina-config (Homebrew oder native install)
-# Falls regina-config fehlt oder --addons leer ist: Fallback
-ADDONSDIR := $(shell \
-  if command -v $(REGINA_CONFIG) >/dev/null 2>&1; then \
-    d=`$(REGINA_CONFIG) --addons 2>/dev/null`; \
-    if [ -n "$$d" ]; then echo "$$d"; fi; \
-  fi)
-
-# Fallback (wenn wirklich nichts gefunden)
-# -> hier kannst du deinen “default” setzen, oder hart abbrechen lassen
-ifeq ($(strip $(ADDONSDIR)),)
-  $(error "regina-config not found or --addons returned empty. Please install Regina REXX dev tools.")
+# Fail early if regina-config is missing
+ifeq ($(shell command -v $(REGINA_CONFIG) >/dev/null 2>&1; echo $$?),1)
+  $(error regina-config not found. Please install Regina Rexx development tools and ensure regina-config is in PATH.)
 endif
 
-# Zielpfad
-INSTALL_ADDONSDIR := $(ADDONSDIR)
+# Ask regina-config for addon dir (must be non-empty)
+ADDONSDIR := $(strip $(shell $(REGINA_CONFIG) --addons 2>/dev/null))
+ifeq ($(ADDONSDIR),)
+  $(error regina-config --addons returned empty. Please install Regina Rexx dev tools correctly.)
+endif
+
+# -------- toolchain ----------
+CC      ?= cc
+INSTALL ?= install
+
+CFLAGS  ?= -O2 -Wall -Wextra -fPIC $(shell $(REGINA_CONFIG) --cflags)
+LDFLAGS ?= $(shell $(REGINA_CONFIG) --libs)
+
+# -------- project ----------
+SRC     := rexxsockets.c
+OBJ     := rexxsockets.o
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+  LIBFILE := librexxsockets.dylib
+  SHLIB_LDFLAGS := -dynamiclib
+else
+  LIBFILE := librexxsockets.so
+  SHLIB_LDFLAGS := -shared
+endif
+
+INSTALL_TO := $(ADDONSDIR)
 
 .PHONY: all install uninstall print-dirs clean
 
-all: $(DYLIB)
+all: $(LIBFILE)
 
-# Beispiel-Buildregel (bitte an dein Projekt anpassen)
-$(DYLIB): rexxsockets.o
-	$(CC) -dynamiclib -o $@ $^ $(LDFLAGS)
-
-rexxsockets.o: rexxsockets.c
+$(OBJ): $(SRC)
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(LIBFILE): $(OBJ)
+	$(CC) $(SHLIB_LDFLAGS) -o $@ $^ $(LDFLAGS)
 
 print-dirs:
 	@echo "REGINA_CONFIG = $(REGINA_CONFIG)"
 	@echo "ADDONSDIR     = $(ADDONSDIR)"
-	@echo "INSTALL_TO    = $(INSTALL_ADDONSDIR)"
+	@echo "INSTALL_TO    = $(INSTALL_TO)"
+	@echo "LIBFILE       = $(LIBFILE)"
 
 install: all
-	@echo "Installing $(DYLIB) to: $(INSTALL_ADDONSDIR)"
-	$(INSTALL) -d "$(INSTALL_ADDONSDIR)"
-	$(INSTALL) -m 755 "$(DYLIB)" "$(INSTALL_ADDONSDIR)/$(DYLIB)"
-	# ln -sf "$(DYLIB)" "$(INSTALL_ADDONSDIR)/$(LIBNAME).so"
+	@echo "Installing $(LIBFILE) to: $(INSTALL_TO)"
+	$(INSTALL) -d "$(INSTALL_TO)"
+	$(INSTALL) -m 755 "$(LIBFILE)" "$(INSTALL_TO)/$(LIBFILE)"
 
 uninstall:
-	@echo "Removing: $(INSTALL_ADDONSDIR)/$(DYLIB)"
-	rm -f "$(INSTALL_ADDONSDIR)/$(DYLIB)"
+	@echo "Removing: $(INSTALL_TO)/$(LIBFILE)"
+	rm -f "$(INSTALL_TO)/$(LIBFILE)"
 
 clean:
-	rm *.dylib *.a *.o
+	rm -f *.o *.dylib *.so
